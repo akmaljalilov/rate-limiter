@@ -1,0 +1,46 @@
+version: '3.2'
+services:
+  openresty:
+    image: openresty/openresty:alpine
+    container_name: test-nginx-rate-limiter
+    ports:
+      - "7000:7000"
+    restart: always
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d/
+  redis:
+    image: "redis:alpine"
+    container_name: test-redis
+    hostname: test-redis
+    ports:
+      - "6380:6379"
+    restart: always
+    networks:
+      - rate-network
+  test-client-service-1:
+    image: test-client-service-1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    restart: always
+    environment:
+      - NAME=Server-1
+
+    networks:
+      - rate-network
+  test-client-service-2:
+    image: test-client-service-1
+    ports:
+      - "4001:4000"
+    restart: always
+    environment:
+      - NAME=Server-2
+
+    networks:
+      - rate-network
+networks:
+  rate-network:
+    name: rate-network
+    external: true
